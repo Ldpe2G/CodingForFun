@@ -6,6 +6,7 @@ import numpy as np
 def parse_args():
   parser = argparse.ArgumentParser(description='')
   parser.add_argument('--image', type=str, default='../datas/timg.jpg', help='')
+  parser.add_argument('--out-path', type=str, default='../datas/cropped.jpg', help='')
   parser.add_argument('--bbox', type=str, default='175,30,250,270', help='')
   parser.add_argument('--rotate-angle', type=float, default=20, help='')
   parser.add_argument('--out-wh', type=str, default='250,270', help='')
@@ -30,8 +31,8 @@ if __name__ == '__main__':
   src_pt = [bbox_center_x, bbox_center_y]
   dst_pt = [out_wh[0] / 2, out_wh[1] / 2]
 
-  scale_x = out_wh[0] / bbox[2]
-  scale_y = out_wh[1] / bbox[3]
+  scale_x = float(out_wh[0]) / bbox[2]
+  scale_y = float(out_wh[1]) / bbox[3]
 
   crop_mat[0][0] = scale_x
   crop_mat[1][1] = scale_y
@@ -77,6 +78,7 @@ if __name__ == '__main__':
 
   cv2.imshow('original image', img)
   cv2.imshow('cropped image', out)
+  cv2.imwrite(args.out_path, out)
   cv2.waitKey()
 
       

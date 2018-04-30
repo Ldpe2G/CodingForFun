@@ -10,8 +10,8 @@
 
 int main(int argc, char** argv) {
 
-  if (argc != 9) {
-    std::cout << "usage: AffiEx IMAGE BBOX_TOP_LEFT_X BBOX_TOP_LEFT_Y BBOX_W BBOX_H ROTATE_ANGLE OUT_W $OUT_H" << std::endl;
+  if (argc != 10) {
+    std::cout << "usage: AffiEx IMAGE BBOX_TOP_LEFT_X BBOX_TOP_LEFT_Y BBOX_W BBOX_H ROTATE_ANGLE OUT_W OUT_H OUT_PATH" << std::endl;
     exit(0);
   }
 
@@ -117,6 +117,7 @@ int main(int argc, char** argv) {
   cv::warpAffine(image, out, tran_mat, new_size, CV_INTER_LINEAR, cv::BORDER_CONSTANT,
            cv::Scalar(0, 0, 0));
 
+  cv::imwrite(argv[9], out);
   cv::namedWindow( "affi image", cv::WINDOW_AUTOSIZE );
   cv::imshow( "affi image", out);
   cv::waitKey();

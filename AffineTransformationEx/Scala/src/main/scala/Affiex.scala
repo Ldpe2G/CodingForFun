@@ -43,8 +43,8 @@ object Affiex {
       val srcPt = Array(bboxCenterX, bboxCenterY) // bbox center
       val dstPt = Array(outWh(0) / 2, outWh(1) / 2) // croped image center
 
-      val scaleX = outWh(0) / bbox(2)
-      val scaleY = outWh(1) / bbox(3)
+      val scaleX = outWh(0).toFloat / bbox(2)
+      val scaleY = outWh(1).toFloat / bbox(3)
   
       tmpArr(0) = scaleX
       tmpArr(4) = scaleY
@@ -106,6 +106,7 @@ object Affiex {
       Core.gemm(tranMat, cropMat, 1, new Mat(), 0, tranMat)
       Imgproc.warpAffine(img, out, tranMat, new Size(outWh(0), outWh(1)))
       
+      Highgui.imwrite(opt.outPath, out)
       val cropShow = new Imshow("croped image")
       cropShow.showImage(out)
       
@@ -127,6 +128,8 @@ object Affiex {
     var rotateAngle: Float = 20
     @Option(name = "--out-wh", usage = "")
     var outWH: String = "250,270" // output_width,output_height
+    @Option(name = "--out-path", usage = "")
+    var outPath: String = "../datas/cropped.jpg" // output_width,output_height
   }
 }
 
