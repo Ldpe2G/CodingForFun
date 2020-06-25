@@ -10,8 +10,8 @@
 
 int main(int argc, char** argv) {
 
-  if (argc != 10) {
-    std::cout << "usage: AffiEx IMAGE BBOX_TOP_LEFT_X BBOX_TOP_LEFT_Y BBOX_W BBOX_H ROTATE_ANGLE OUT_W OUT_H OUT_PATH" << std::endl;
+  if (argc != 11) {
+    std::cout << "usage: AffiEx IMAGE BBOX_TOP_LEFT_X BBOX_TOP_LEFT_Y BBOX_W BBOX_H ROTATE_ANGLE SHEAR_FACTOER OUT_W OUT_H OUT_PATH" << std::endl;
     exit(0);
   }
 
@@ -28,8 +28,8 @@ int main(int argc, char** argv) {
   float bbox_center_x = bbox_top_x + bbox_w / 2;
   float bbox_center_y = bbox_top_y + bbox_h / 2;
 
-  float new_width = atoi(argv[7]);
-  float new_height = atoi(argv[8]);
+  float new_width = atoi(argv[8]);
+  float new_height = atoi(argv[9]);
 
   // crop mat
   cv::Mat crop_mat(3, 3, CV_32F);
@@ -97,6 +97,23 @@ int main(int argc, char** argv) {
   rotate_mat.at<float>(1, 0) = -sin_a;
   rotate_mat.at<float>(1, 1) = cos_a;
 
+  // shear mat
+  cv::Mat shear_mat(3, 3, CV_32F);
+  // set default value of shear_mat
+  shear_mat.at<float>(0, 0) = 1;
+  shear_mat.at<float>(0, 1) = 0;
+  shear_mat.at<float>(0, 2) = 0;
+  shear_mat.at<float>(1, 0) = 0;
+  shear_mat.at<float>(1, 1) = 1;
+  shear_mat.at<float>(1, 2) = 0;
+  shear_mat.at<float>(2, 0) = 0;
+  shear_mat.at<float>(2, 1) = 0;
+  shear_mat.at<float>(2, 2) = 1;
+
+  float shear_factor = atof(argv[7]);
+  shear_mat.at<float>(0, 1) = shear_factor;
+  shear_mat.at<float>(1, 0) = shear_factor;
+
   // shift mat
   cv::Mat shift_mat2(2, 3, CV_32F);
   // set default value of shift_mat2
@@ -111,13 +128,13 @@ int main(int argc, char** argv) {
   shift_mat2.at<float>(1, 2) = dst_pt[1];
 
   cv::Mat out;
-  cv::Mat tran_mat = shift_mat2 * rotate_mat * shift_mat1 * crop_mat;
+  cv::Mat tran_mat = shift_mat2 * shear_mat * rotate_mat * shift_mat1 * crop_mat;
 
   cv::Size new_size(new_width, new_height);
   cv::warpAffine(image, out, tran_mat, new_size, CV_INTER_LINEAR, cv::BORDER_CONSTANT,
            cv::Scalar(0, 0, 0));
 
-  cv::imwrite(argv[9], out);
+  cv::imwrite(argv[10], out);
   cv::namedWindow( "affi image", cv::WINDOW_AUTOSIZE );
   cv::imshow( "affi image", out);
   cv::waitKey();

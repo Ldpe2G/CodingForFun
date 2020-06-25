@@ -29,6 +29,7 @@ object Affiex {
       val bbox = opt.bbox.split(",").map(_.toInt)
       val outWh = opt.outWH.split(",").map(_.toInt)
 
+      // crop mat, mapping the center of bbox to the center of croped image after affine transformation
       val cropMat = new Mat(3, 3, CvType.CV_32F)
       var tmpArr = Array[Float](
           1, 0, 0,
@@ -49,11 +50,11 @@ object Affiex {
       tmpArr(0) = scaleX
       tmpArr(4) = scaleY
       
-      // mapping the center of bbox to the center of croped image after affine transformation
       tmpArr(2) = dstPt(0) - tmpArr(0) * srcPt(0)
       tmpArr(5) = dstPt(1) - tmpArr(4) * srcPt(1)
       cropMat.put(0, 0, tmpArr)
       
+      // shift mat
       val shiftMat1 = new Mat(3, 3, CvType.CV_32F)
       tmpArr = Array[Float](
           1, 0, 0,
@@ -67,6 +68,7 @@ object Affiex {
       
       shiftMat1.put(0, 0, tmpArr)  
       
+      // rotate mat
       val rotateMat = new Mat(3, 3, CvType.CV_32F)
       tmpArr = Array[Float](
           1, 0, 0,
@@ -84,8 +86,23 @@ object Affiex {
       tmpArr(3) = -sinA
       tmpArr(4) = cosA
       
-      rotateMat.put(0, 0, tmpArr)  
+      rotateMat.put(0, 0, tmpArr)
 
+      // shear mat
+      val shearMat = new Mat(3, 3, CvType.CV_32F)
+      tmpArr = Array[Float](
+          1, 0, 0,
+          0, 1, 0,
+          0, 0, 1
+      )
+      shearMat.put(0, 0, tmpArr)
+      
+      tmpArr(1) = opt.shearFactor
+      tmpArr(3) = opt.shearFactor
+      
+      shearMat.put(0, 0, tmpArr)
+
+      // shift mat
       val shiftMat2 = new Mat(2, 3, CvType.CV_32F)
       tmpArr = Array[Float](
           1, 0, 0,
@@ -101,7 +118,8 @@ object Affiex {
       val out = new Mat()
       val tranMat = new Mat()
       
-      Core.gemm(shiftMat2, rotateMat, 1, new Mat(), 0, tranMat)
+      Core.gemm(shiftMat2, shearMat, 1, new Mat(), 0, tranMat)
+      Core.gemm(tranMat, rotateMat, 1, new Mat(), 0, tranMat)
       Core.gemm(tranMat, shiftMat1, 1, new Mat(), 0, tranMat)
       Core.gemm(tranMat, cropMat, 1, new Mat(), 0, tranMat)
       Imgproc.warpAffine(img, out, tranMat, new Size(outWh(0), outWh(1)))
@@ -126,6 +144,8 @@ object Affiex {
     var bbox: String = "175,30,250,270" // top_left_x,top_left_y,width,height
     @Option(name = "--rotate-angle", usage = "")
     var rotateAngle: Float = 20
+    @Option(name = "--shear-factor", usage = "")
+    var shearFactor: Float = 0.2f
     @Option(name = "--out-wh", usage = "")
     var outWH: String = "250,270" // output_width,output_height
     @Option(name = "--out-path", usage = "")

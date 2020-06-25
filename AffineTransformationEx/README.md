@@ -1,5 +1,4 @@
-# Using opencv affine transformation function to crop (then rotate) image by provided bbox
-
+# Generate Complicated Affine Transformation Matrix With Simple Matrixs(crop,scale,shift,shear,rotate)).
 
 ### Cpp Version
 
