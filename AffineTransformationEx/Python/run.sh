@@ -5,7 +5,7 @@ OUT_PATH="../datas/cropped.jpg"
 
 BBOX="175,30,250,270"   #top_left_x,top_left_y,width,height
 OUT_WH="125,135"  # width,height
-ROTATE_ANGLE=0	
+ROTATE_ANGLE=-10	
 SHEAR_FACTOR=0.1
 
 python affiex.py \

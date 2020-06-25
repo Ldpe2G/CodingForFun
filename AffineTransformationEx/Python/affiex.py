@@ -27,20 +27,18 @@ if __name__ == '__main__':
   crop_mat[1][1] = 1
   crop_mat[2][2] = 1
 
-  bbox_center_x = bbox[0] + bbox[2] / 2
-  bbox_center_y = bbox[1] + bbox[3] / 2
+  crop_mat[0][2] = -bbox[0]
+  crop_mat[1][2] = -bbox[1]
 
-  src_pt = [bbox_center_x, bbox_center_y]
-  dst_pt = [out_wh[0] / 2, out_wh[1] / 2]
+  # scale matrix
+  scale_mat = np.zeros((3, 3), np.float32)
+  scale_mat[2][2] = 1
 
   scale_x = float(out_wh[0]) / bbox[2]
   scale_y = float(out_wh[1]) / bbox[3]
 
-  crop_mat[0][0] = scale_x
-  crop_mat[1][1] = scale_y
-
-  crop_mat[0][2] = dst_pt[0] - crop_mat[0][0] * src_pt[0]
-  crop_mat[1][2] = dst_pt[1] - crop_mat[1][1] * src_pt[1]
+  scale_mat[0][0] = scale_x
+  scale_mat[1][1] = scale_y
 
   # shift matrix 
   shift_mat1 = np.zeros((3, 3), np.float32)
@@ -48,8 +46,8 @@ if __name__ == '__main__':
   shift_mat1[1][1] = 1
   shift_mat1[2][2] = 1
 
-  shift_mat1[0][2] = -dst_pt[0]
-  shift_mat1[1][2] = -dst_pt[1]
+  shift_mat1[0][2] = -(out_wh[0] / 2)
+  shift_mat1[1][2] = -(out_wh[1] / 2)
 
   # rotate matrix
   rotate_mat = np.zeros((3, 3), np.float32)
@@ -82,12 +80,13 @@ if __name__ == '__main__':
   shift_mat2[0][0] = 1
   shift_mat2[1][1] = 1
 
-  shift_mat2[0][2] = dst_pt[0]
-  shift_mat2[1][2] = dst_pt[1]
+  shift_mat2[0][2] = out_wh[0] / 2
+  shift_mat2[1][2] = out_wh[1] / 2
 
   tran_mat = cv2.gemm(shift_mat2, shear_mat, 1, None, 0) 
   tran_mat = cv2.gemm(tran_mat, rotate_mat, 1, None, 0) 
-  tran_mat = cv2.gemm(tran_mat, shift_mat1, 1, None, 0) 
+  tran_mat = cv2.gemm(tran_mat, shift_mat1, 1, None, 0)
+  tran_mat = cv2.gemm(tran_mat, scale_mat, 1, None, 0) 
   tran_mat = cv2.gemm(tran_mat, crop_mat, 1, None, 0) 
 
   out = cv2.warpAffine(img, tran_mat, (out_wh[0], out_wh[1]))

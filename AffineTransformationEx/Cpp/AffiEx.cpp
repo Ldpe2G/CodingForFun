@@ -44,19 +44,24 @@ int main(int argc, char** argv) {
   crop_mat.at<float>(2, 1) = 0;
   crop_mat.at<float>(2, 2) = 1;
 
-  std::vector<float> src_pt = {bbox_center_x, bbox_center_y};
-  std::vector<float> dst_pt = {new_width / 2, new_height / 2};
+  crop_mat.at<float>(0, 2) = -bbox_top_x;
+  crop_mat.at<float>(1, 2) = -bbox_top_y;
 
-  float scale_x = new_width / bbox_w;
-  float scale_y = new_height / bbox_h;
-  
-  crop_mat.at<float>(0, 0) = scale_x;
-  crop_mat.at<float>(1, 1) = scale_y;
+  // scale mat
+  cv::Mat scale_mat(3, 3, CV_32F);
+  // set default value of scale_mat
+  scale_mat.at<float>(0, 0) = 1;
+  scale_mat.at<float>(0, 1) = 0;
+  scale_mat.at<float>(0, 2) = 0;
+  scale_mat.at<float>(1, 0) = 0;
+  scale_mat.at<float>(1, 1) = 1;
+  scale_mat.at<float>(1, 2) = 0;
+  scale_mat.at<float>(2, 0) = 0;
+  scale_mat.at<float>(2, 1) = 0;
+  scale_mat.at<float>(2, 2) = 1;
 
-  // mapping the center of bbox to the center of croped image after affine transformation
-  crop_mat.at<float>(0, 2) = dst_pt[0] - crop_mat.at<float>(0, 0) * src_pt[0];
-  crop_mat.at<float>(1, 2) = dst_pt[1] - crop_mat.at<float>(1, 1) * src_pt[1];
-
+  scale_mat.at<float>(0, 0) = new_width / bbox_w;
+  scale_mat.at<float>(1, 1) = new_height / bbox_h;
 
   // shift mat
   cv::Mat shift_mat1(3, 3, CV_32F);
@@ -71,8 +76,8 @@ int main(int argc, char** argv) {
   shift_mat1.at<float>(2, 1) = 0;
   shift_mat1.at<float>(2, 2) = 1;
 
-  shift_mat1.at<float>(0, 2) = -dst_pt[0];
-  shift_mat1.at<float>(1, 2) = -dst_pt[1];
+  shift_mat1.at<float>(0, 2) = -(new_width / 2);
+  shift_mat1.at<float>(1, 2) = -(new_height / 2);
 
   // rotate mat
   cv::Mat rotate_mat(3, 3, CV_32F);
@@ -124,11 +129,11 @@ int main(int argc, char** argv) {
   shift_mat2.at<float>(1, 1) = 1;
   shift_mat2.at<float>(1, 2) = 0;
 
-  shift_mat2.at<float>(0, 2) = dst_pt[0];
-  shift_mat2.at<float>(1, 2) = dst_pt[1];
+  shift_mat2.at<float>(0, 2) = new_width / 2;
+  shift_mat2.at<float>(1, 2) = new_height / 2;
 
   cv::Mat out;
-  cv::Mat tran_mat = shift_mat2 * shear_mat * rotate_mat * shift_mat1 * crop_mat;
+  cv::Mat tran_mat = shift_mat2 * shear_mat * rotate_mat * shift_mat1 * scale_mat * crop_mat;
 
   cv::Size new_size(new_width, new_height);
   cv::warpAffine(image, out, tran_mat, new_size, CV_INTER_LINEAR, cv::BORDER_CONSTANT,

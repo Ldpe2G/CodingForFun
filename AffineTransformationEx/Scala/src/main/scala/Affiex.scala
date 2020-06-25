@@ -37,22 +37,23 @@ object Affiex {
           0, 0, 1
       )
       cropMat.put(0, 0, tmpArr)
-
-      val bboxCenterX = bbox(0) + bbox(2) / 2;
-      val bboxCenterY = bbox(1) + bbox(3) / 2;
-
-      val srcPt = Array(bboxCenterX, bboxCenterY) // bbox center
-      val dstPt = Array(outWh(0) / 2, outWh(1) / 2) // croped image center
-
-      val scaleX = outWh(0).toFloat / bbox(2)
-      val scaleY = outWh(1).toFloat / bbox(3)
-  
-      tmpArr(0) = scaleX
-      tmpArr(4) = scaleY
       
-      tmpArr(2) = dstPt(0) - tmpArr(0) * srcPt(0)
-      tmpArr(5) = dstPt(1) - tmpArr(4) * srcPt(1)
+      tmpArr(2) = -bbox(0)
+      tmpArr(5) = -bbox(1)
       cropMat.put(0, 0, tmpArr)
+
+      // scale mat
+      val scaleMat = new Mat(3, 3, CvType.CV_32F)
+      tmpArr = Array[Float](
+          1, 0, 0,
+          0, 1, 0,
+          0, 0, 1
+      )
+      scaleMat.put(0, 0, tmpArr)
+
+      tmpArr(0) = outWh(0).toFloat / bbox(2)
+      tmpArr(4) = outWh(1).toFloat / bbox(3)
+      scaleMat.put(0, 0, tmpArr)
       
       // shift mat
       val shiftMat1 = new Mat(3, 3, CvType.CV_32F)
@@ -63,8 +64,8 @@ object Affiex {
       )
       shiftMat1.put(0, 0, tmpArr)
   
-      tmpArr(2) = -dstPt(0)
-      tmpArr(5) = -dstPt(1)
+      tmpArr(2) = -(outWh(0) / 2)
+      tmpArr(5) = -(outWh(1) / 2)
       
       shiftMat1.put(0, 0, tmpArr)  
       
@@ -110,8 +111,8 @@ object Affiex {
       )
       shiftMat2.put(0, 0, tmpArr)
   
-      tmpArr(2) = dstPt(0)
-      tmpArr(5) = dstPt(1)
+      tmpArr(2) = outWh(0) / 2
+      tmpArr(5) = outWh(1) / 2
       
       shiftMat2.put(0, 0, tmpArr)    
 
@@ -121,6 +122,7 @@ object Affiex {
       Core.gemm(shiftMat2, shearMat, 1, new Mat(), 0, tranMat)
       Core.gemm(tranMat, rotateMat, 1, new Mat(), 0, tranMat)
       Core.gemm(tranMat, shiftMat1, 1, new Mat(), 0, tranMat)
+      Core.gemm(tranMat, scaleMat, 1, new Mat(), 0, tranMat)
       Core.gemm(tranMat, cropMat, 1, new Mat(), 0, tranMat)
       Imgproc.warpAffine(img, out, tranMat, new Size(outWh(0), outWh(1)))
       
